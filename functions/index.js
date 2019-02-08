@@ -47,3 +47,17 @@ app.post('/categories', (req, res) => {
     res.header('Content-Type', 'application/json; charset=utf-8');
     res.status(201).json({ result: 'ok' });
 });
+
+app.get('/categories', (req, res) => {
+    const categoriesRef = admin.database().ref('categories');
+    categoriesRef.once('value', function (snapshot) {
+        let items = new Array();
+        snapshot.forEach(function (childSnapshot) {
+            const cname = childSnapshot.key;
+            items.push(cname);
+        });
+
+        res.header('Content-Type', 'application/json; charset=utf-8');
+        res.send({ categories: items });
+    });
+});
