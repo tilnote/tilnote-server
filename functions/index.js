@@ -61,3 +61,41 @@ app.get('/categories', (req, res) => {
         res.send({ categories: items });
     });
 });
+
+app.post('/categories/:cname/notes', (req, res) => {
+    const cname = req.params.cname;
+    const message = {
+        date: new Date().toJSON(),
+        body: req.body.body,
+        user: req.user
+    };
+    const notesRef = admin.database().ref(`categories/${cname}/notes`);
+    notesRef.push(message);
+
+    res.header('Content-Type', 'application/json; charset=utf-8');
+    res.status(201).send({ result: 'ok' });
+});
+
+app.get('/categories/:cname/notes', (req, res) => {
+    const cname = req.params.cname;
+    const notesRef = admin.database().ref(`categories/${cname}/notes`).orderByChild('date').limitToLast(20);
+    notesRef.once('value', function(snapshot) {
+        let items = new Array();
+        snapshot.forEach(function(childSnapshot) {
+            let note = childSnapshot.val();
+            note.id = childSnapshot.key;
+            items.push(note);
+        });
+        items.reverse();
+        res.header('Content-Type', 'application/json; charset=utf-8');
+        res.send({ notes: items });
+    });
+});
+
+app.post('/reset', (req, res) => {
+    createCategory('default');
+    res.header('Content-Type', 'application/json; charset=utf-8');
+    res.status(201).send({ result: "ok" });
+});
+
+exports.v1 = functions.https.onRequest(app);
